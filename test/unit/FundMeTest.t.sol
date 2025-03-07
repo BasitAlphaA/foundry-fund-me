@@ -6,6 +6,11 @@ import {Test, console} from "forge-std/Test.sol";
 import {FundMe} from "../../src/FundMe.sol";
 import {DeployFundMe} from "../../script/DeployFundMe.s.sol";
 
+/**
+ * @title FundMeTest
+ * @dev This contract tests the FundMe contract using Foundry.
+ */
+
 contract FundMeTest is Test {
     FundMe fundMe;
     DeployFundMe deployFundMe;
@@ -14,6 +19,10 @@ contract FundMeTest is Test {
     uint256 constant SEND_VALUE = 0.1 ether;
     uint256 constant STARTING_BALANCE = 10 ether;
     uint256 public constant GAS_PRICE = 1;
+
+  /**
+     * @notice Deploys the FundMe contract before running tests.
+     */
 
     function setUp() external {
         deployFundMe = new DeployFundMe();
@@ -24,37 +33,66 @@ contract FundMeTest is Test {
         vm.deal(USER, STARTING_BALANCE);
     }
 
+ /**
+     * @notice Modifier to fund the contract before executing a function.
+     */
+
     modifier funded() {
         vm.prank(USER);
         fundMe.fund{value: SEND_VALUE}();
         _;
     }
 
+/**
+     * @notice Ensures that the contract owner is the deployer.
+     */
+
     function testOwnerIsMsgSender() public view {
         address owner = fundMe.getOwner();
         assertEq(owner, msg.sender);
     }
+
+ /**
+     * @notice Verifies that funding fails if insufficient ETH is sent.
+     */
 
     function testFundFailsWithoutEnoughEth() public {
         vm.expectRevert();
         fundMe.fund();
     }
 
+    /**
+     * @notice Checks that funding updates the mapping of funded amounts.
+     */
+
     function testFundUpdatesFundedDataStructure() public funded {
         uint256 amountFunded = fundMe.getAddressToAmountFunded(USER);
         assertEq(amountFunded, SEND_VALUE);
     }
+
+ /**
+     * @notice Ensures that a funder is added to the array of funders.
+     */
 
     function testAddsFunderToArrayOfFunders() public funded {
         address funder = fundMe.getFunders(0);
         assertEq(funder, USER);
     }
 
+/**
+     * @notice Ensures that only the contract owner can withdraw funds.
+     */
+
     function onlyOwnerCanWithdraw() public funded {
         vm.expectRevert();
         vm.prank(USER);
         fundMe.withdraw();
     }
+
+   /**
+     * @notice Tests withdrawal with a single funder.
+     * @dev Ensures that the contract balance is properly transferred to the owner.
+     */
 
     function testWithdrawWithSingleFunder() public {
         // Arrange
@@ -82,6 +120,11 @@ contract FundMeTest is Test {
          */
     }
 
+    /**
+     * @notice Tests withdrawal with multiple funders.
+     * @dev Simulates multiple funders contributing before withdrawal.
+     */
+
     function testWithdrawWithMultipleFunders() public {
         // Arrange
         uint160 numberOfFunders = 10;
@@ -106,13 +149,5 @@ contract FundMeTest is Test {
         assert(startingFundMeBalance + startingOwnerBalance == fundMe.getOwner().balance);
     }
 
-    // function testEnoughAmountSpent() public payable {
-    //     uint256  sendValue = fundMe.MINIMUM_USD();
-    //     vm.deal(address(this), sendValue); // Give the test contract enough ETH
-    //     console.log("This is the send Value",sendValue);
-    //     fundMe.fund{value : sendValue}();
-    //     uint256 tx1 = fundMe.addressToAmountFunded(address(this));
-    //     console.log("This is transaction",tx1);
-    //     assertEq(tx1 , sendValue);
-    // }
+
 }
