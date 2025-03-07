@@ -28,3 +28,7 @@ contract ZkSyncDevOps is Test, ZkSyncChainChecker, FoundryZkSyncChecker {
     //     assert(exists);
     // }
 }
+
+
+//WHAT IS FFIIIIIIIIIIIIII
+// GPT ITTTTTTTTTT
